@@ -1,0 +1,13 @@
+SELECT 
+    ind.index_name, 
+    ind.table_name, 
+    col.column_name
+FROM 
+    user_indexes ind
+    JOIN user_ind_columns col 
+        ON ind.index_name = col.index_name 
+        AND ind.table_name = col.table_name
+ORDER BY 
+    ind.table_name, 
+    ind.index_name, 
+    col.column_position;
