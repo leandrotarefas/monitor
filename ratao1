@@ -1,20 +1,46 @@
-// Importar o módulo 'net'
+// Importar os módulos 'net' e 'fs'
 const net = require('net');
+const fs = require('fs');
 
-// Definir as portas de origem e destino
-const sourcePort = 40817;
-const destinationPort = 50817;
+// Verificar os argumentos da linha de comando
+if (process.argv.length < 4 || process.argv.length > 5) {
+  console.error('Uso: node redirecionamento.js <sourcePort> <destinationPort> [destinationIP]');
+  process.exit(1);
+}
+
+// Obter as portas de origem e destino e o IP de destino dos argumentos da linha de comando
+const sourcePort = parseInt(process.argv[2], 10);
+const destinationPort = parseInt(process.argv[3], 10);
+const destinationIP = process.argv[4] || 'localhost';
+const logFile = 'log.txt';
+
+// Função para salvar os dados no arquivo de log
+function logData(direction, data) {
+  const logMessage = `${new Date().toISOString()} - ${direction}: ${data.toString()}\n`;
+
+  fs.appendFile(logFile, logMessage, (err) => {
+    if (err) {
+      console.error(`Erro ao salvar no arquivo de log (${logFile}):`, err);
+    }
+  });
+}
 
 // Criar um servidor para escutar na porta de origem
 const sourceServer = net.createServer((sourceSocket) => {
-  // Conectar ao servidor de destino na porta de destino
-  const destinationSocket = net.createConnection({ port: destinationPort });
+  // Conectar ao servidor de destino no IP e porta de destino
+  const destinationSocket = net.createConnection({ host: destinationIP, port: destinationPort });
 
-  // Redirecionar os dados recebidos do sourceSocket para o destinationSocket
-  sourceSocket.pipe(destinationSocket);
+  // Redirecionar os dados recebidos do sourceSocket para o destinationSocket e registrar
+  sourceSocket.on('data', (data) => {
+    logData('Enviado', data);
+    destinationSocket.write(data);
+  });
 
-  // Redirecionar os dados recebidos do destinationSocket para o sourceSocket
-  destinationSocket.pipe(sourceSocket);
+  // Redirecionar os dados recebidos do destinationSocket para o sourceSocket e registrar
+  destinationSocket.on('data', (data) => {
+    logData('Recebido', data);
+    sourceSocket.write(data);
+  });
 
   // Lidar com erros nos sockets
   sourceSocket.on('error', (err) => console.error('Erro no sourceSocket:', err));
@@ -23,7 +49,7 @@ const sourceServer = net.createServer((sourceSocket) => {
 
 // Iniciar o servidor na porta de origem
 sourceServer.listen(sourcePort, () => {
-  console.log(`Servidor escutando na porta ${sourcePort} e redirecionando para a porta ${destinationPort}`);
+  console.log(`Servidor escutando na porta ${sourcePort} e redirecionando para ${destinationIP}:${destinationPort}`);
 });
 
 // Lidar com erros no servidor
