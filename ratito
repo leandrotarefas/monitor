@@ -1,0 +1,51 @@
+const net = require('net');
+
+const clientPort = 40817;
+const serverPort = 50817;
+const message = 'Olá, mundo!';
+
+// Criar um servidor para escutar na porta 50817
+const server = net.createServer((socket) => {
+  console.log('Conexão recebida no servidor.');
+
+  socket.on('data', (data) => {
+    console.log(`Servidor recebeu: ${data}`);
+  });
+
+  socket.on('end', () => {
+    console.log('Conexão encerrada no servidor.');
+    server.close();
+  });
+
+  socket.on('error', (err) => {
+    console.error('Erro no servidor:', err);
+  });
+});
+
+// Iniciar o servidor na porta 50817
+server.listen(serverPort, () => {
+  console.log(`Servidor escutando na porta ${serverPort}`);
+});
+
+// Criar um cliente para se conectar na porta 40817
+const client = net.createConnection({ port: clientPort }, () => {
+  console.log('Cliente conectado na porta 40817.');
+
+  // Enviar mensagem ao servidor através do redirecionamento de socket
+  client.write(message);
+});
+
+// Receber dados no cliente
+client.on('data', (data) => {
+  console.log(`Cliente recebeu: ${data}`);
+  client.end();
+});
+
+// Lidar com o fechamento e erros no cliente
+client.on('end', () => {
+  console.log('Cliente desconectado.');
+});
+
+client.on('error', (err) => {
+  console.error('Erro no cliente:', err);
+});
