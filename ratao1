@@ -1,0 +1,30 @@
+// Importar o módulo 'net'
+const net = require('net');
+
+// Definir as portas de origem e destino
+const sourcePort = 40817;
+const destinationPort = 50817;
+
+// Criar um servidor para escutar na porta de origem
+const sourceServer = net.createServer((sourceSocket) => {
+  // Conectar ao servidor de destino na porta de destino
+  const destinationSocket = net.createConnection({ port: destinationPort });
+
+  // Redirecionar os dados recebidos do sourceSocket para o destinationSocket
+  sourceSocket.pipe(destinationSocket);
+
+  // Redirecionar os dados recebidos do destinationSocket para o sourceSocket
+  destinationSocket.pipe(sourceSocket);
+
+  // Lidar com erros nos sockets
+  sourceSocket.on('error', (err) => console.error('Erro no sourceSocket:', err));
+  destinationSocket.on('error', (err) => console.error('Erro no destinationSocket:', err));
+});
+
+// Iniciar o servidor na porta de origem
+sourceServer.listen(sourcePort, () => {
+  console.log(`Servidor escutando na porta ${sourcePort} e redirecionando para a porta ${destinationPort}`);
+});
+
+// Lidar com erros no servidor
+sourceServer.on('error', (err) => console.error('Erro no servidor:', err));
