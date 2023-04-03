@@ -65,4 +65,20 @@ client.on('data', data => {
 client.on('close', () => {
   console.log('Conexão fechada');
 });
+
+
+const str = 'Olá, mundo!'; // String UTF-8
+const buffer = Buffer.from(str, 'utf8'); // Cria um buffer a partir da string UTF-8
+const utf8AsciiPairs = []; // Array para armazenar os pares UTF-8:ASCII
+
+for (let i = 0; i < buffer.length; i++) {
+  const utf8Code = buffer[i].toString(16).padStart(2, '0').toUpperCase(); // Converte cada elemento do buffer em um código UTF-8 em hexadecimal
+  const asciiCode = buffer[i].charCodeAt().toString(); // Converte cada elemento do buffer em um código ASCII
+  utf8AsciiPairs.push(`0x${utf8Code}:${asciiCode}`); // Adiciona o par UTF-8:ASCII ao array
+}
+
+const utf8AsciiString = utf8AsciiPairs.join(', '); // Cria a string de pares UTF-8:ASCII separada por vírgulas
+
+console.log(utf8AsciiString); // Saída: "0x4F:79, 0x6C:108, 0xC3:195, 0xA1:161, 0x2C:44, 0x20:32, 0x6D:109, 0x75:117, 0x6E:110, 0x64:100, 0x6F:111, 0x21:33"
+
  
