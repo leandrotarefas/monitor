@@ -1,28 +1,42 @@
 const net = require('net');
+const readline = require('readline');
 
-// Recebe o número da porta e o host destino como argumentos de linha de comando
-const [portDestino, hostDestino] = process.argv.slice(2);
+const PORT = process.argv[2];
+const HOST = process.argv[3];
 
-// Cria o socket client
-const client = new net.Socket();
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
-// Conecta-se ao servidor
-client.connect(portDestino, hostDestino, () => {
-  console.log(`Conectado ao servidor ${hostDestino}:${portDestino}`);
+function sendMessage(socket, message) {
+  socket.write(message);
 
-  // Lê as mensagens digitadas pelo usuário no console e as envia para o servidor
-  process.stdin.on('data', data => {
-    client.write(data);
+  socket.once('data', (data) => {
+    console.log(`Received response: ${data.toString()}`);
+    socket.end();
   });
-});
+}
 
-// Imprime o nome e o conteúdo do evento 'data' quando recebe dados do servidor
-client.on('data', data => {
-  console.log(`Dados recebidos do servidor: ${data}`);
-});
+function startClient() {
+  const socket = net.connect({ port: PORT, host: HOST }, () => {
+    console.log(`Connected to ${HOST}:${PORT}`);
 
-// Imprime o nome do evento 'close' quando a conexão é fechada
-client.on('close', () => {
-  console.log('Conexão fechada');
-});
- 
+    rl.question('Enter a message: ', (message) => {
+      sendMessage(socket, message);
+      startClient();
+    });
+  });
+
+  socket.on('error', (err) => {
+    console.error(`Error connecting to ${HOST}:${PORT}: ${err}`);
+    rl.close();
+  });
+
+  socket.on('end', () => {
+    console.log(`Connection closed by ${HOST}:${PORT}`);
+    rl.close();
+  });
+}
+
+startClient();
