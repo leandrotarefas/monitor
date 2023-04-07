@@ -81,4 +81,21 @@ const utf8AsciiString = utf8AsciiPairs.join(', '); // Cria a string de pares UTF
 
 console.log(utf8AsciiString); // Saída: "0x4F:79, 0x6C:108, 0xC3:195, 0xA1:161, 0x2C:44, 0x20:32, 0x6D:109, 0x75:117, 0x6E:110, 0x64:100, 0x6F:111, 0x21:33"
 
+
+
+
+
+function customTextConversion(text) {
+  return [...text].map(char => {
+    if (/[0-9]/.test(char)) {
+      return 'N';
+    } else if (/[A-Za-z]/.test(char)) {
+      return 'L';
+    } else if (char === ' ') {
+      return 'X';
+    } else {
+      return char.charCodeAt(0).toString(16);
+    }
+  }).join(' ');
+}
  
