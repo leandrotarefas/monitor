@@ -1,0 +1,65 @@
+const axios = require('axios');
+const faker = require('faker');
+
+const USERS = 5;
+const REQUESTS_PER_USER = 100;
+const SERVER_URL = 'http://localhost:3000/send'; // substitua pela URL do servidor desejado
+
+const responseTimes = [];
+
+async function simulateRequests() {
+  // Gerar um JSON body aleatório
+  function generateRandomJsonBody() {
+    return {
+      name: faker.name.findName(),
+      email: faker.internet.email(),
+      address: {
+        street: faker.address.streetName(),
+        city: faker.address.city(),
+        zipCode: faker.address.zipCode(),
+      },
+    };
+  }
+
+  // Enviar uma requisição POST
+  async function sendPostRequest(data) {
+    try {
+      const startTime = Date.now();
+      await axios.post(SERVER_URL, data);
+      const responseTime = Date.now() - startTime;
+      responseTimes.push(responseTime);
+      console.log(`POST request sent successfully. Response time: ${responseTime}ms`);
+    } catch (error) {
+      console.log(`Error sending POST request: ${error.message}`);
+    }
+  }
+
+  // Simular as requisições de um usuário
+  async function simulateUserRequests() {
+    for (let i = 0; i < REQUESTS_PER_USER; i++) {
+      const jsonBody = generateRandomJsonBody();
+      await sendPostRequest(jsonBody);
+    }
+  }
+
+  // Iniciar a simulação
+  const userPromises = [];
+  for (let i = 0; i < USERS; i++) {
+    userPromises.push(simulateUserRequests());
+  }
+
+  await Promise.all(userPromises);
+
+  // Calcular e imprimir estatísticas de tempo de resposta
+  const totalTime = responseTimes.reduce((acc, curr) => acc + curr, 0);
+  const averageTime = totalTime / responseTimes.length;
+  const minTime = Math.min(...responseTimes);
+  const maxTime = Math.max(...responseTimes);
+
+  console.log('Simulation completed.');
+  console.log(`Average response time: ${averageTime.toFixed(2)}ms`);
+  console.log(`Min response time: ${minTime}ms`);
+  console.log(`Max response time: ${maxTime}ms`);
+}
+
+simulateRequests();
