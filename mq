@@ -1,88 +1,22 @@
-const mq = require('ibmmq');
+const fs = require('fs');
+const path = require('path');
 
-const connOptions = {
-  MQC: mq.MQC,
-  queueManager: 'CB.HTI',
-  channelName: 'SRVCONN',
-  connName: '123.4.5.60(3000)',
-  user: '', // insira o nome de usuário, se necessário
-  password: '', // insira a senha, se necessário
-};
+const inputFile = path.resolve('path/to/base64/text/file.txt');
+const outputFile = path.resolve('path/to/output/file.exe');
 
-async function sendMQMessage() {
-  try {
-    mq.setTuningParameters({ maxInFlight: 1 });
-
-    const hConn = await new Promise((resolve, reject) => {
-      mq.Connx(connOptions.queueManager, connOptions, (err, hConn) => {
-        if (err) {
-          console.log(`Error connecting to IBM MQ: ${err.message}`);
-          reject(err);
-        } else {
-          resolve(hConn);
-        }
-      });
-    });
-
-    console.log('Connected to IBM MQ.');
-
-    const hObj = await new Promise((resolve, reject) => {
-      const openOptions = connOptions.MQC.MQOO_OUTPUT;
-      mq.Open(hConn, { ObjectType: connOptions.MQC.MQOT_Q, ObjectName: 'FILINHA' }, openOptions, (err, hObj) => {
-        if (err) {
-          console.log(`Error opening queue: ${err.message}`);
-          reject(err);
-        } else {
-          resolve(hObj);
-        }
-      });
-    });
-
-    console.log('Queue opened.');
-
-    const mqmd = new mq.MQMD();
-    const pmo = new mq.MQPMO();
-    const message = 'Your message here';
-
-    await new Promise((resolve, reject) => {
-      mq.Put(hObj, mqmd, pmo, message, (err) => {
-        if (err) {
-          console.log(`Error putting message: ${err.message}`);
-          reject(err);
-        } else {
-          console.log('Message sent to IBM MQ.');
-          resolve();
-        }
-      });
-    });
-
-    await new Promise((resolve, reject) => {
-      mq.Close(hObj, 0, (err) => {
-        if (err) {
-          console.log(`Error closing queue: ${err.message}`);
-          reject(err);
-        } else {
-          console.log('Queue closed.');
-          resolve();
-        }
-      });
-    });
-
-    await new Promise((resolve, reject) => {
-      mq.Disc(hConn, (err) => {
-        if (err) {
-          console.log(`Error disconnecting: ${err.message}`);
-          reject(err);
-        } else {
-          console.log('Disconnected from IBM MQ.');
-          resolve();
-        }
-      });
-    });
-
-  } catch (error) {
-    console.log(`Error during operation: ${error.message}`);
+fs.readFile(inputFile, 'utf8', (err, data) => {
+  if (err) {
+    console.error('Error reading the input file:', err);
+    return;
   }
-}
 
-sendMQMessage();
+  const buffer = Buffer.from(data, 'base64');
+  fs.writeFile(outputFile, buffer, (err) => {
+    if (err) {
+      console.error('Error writing the output file:', err);
+      return;
+    }
+
+    console.log('File successfully converted back to .exe');
+  });
+});
