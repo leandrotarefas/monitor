@@ -1,16 +1,7 @@
 module.exports = {
-  testEnvironment: 'node',
   transform: {
-    '^.+\\.js$': 'babel-jest',
+    '^.+\\.jsx?$': 'babel-jest',
   },
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  testMatch: ['**/*.test.js'],
-  coveragePathIgnorePatterns: ['/node_modules/'],
-  collectCoverageFrom: ['src/**/*.js'],
-  coverageDirectory: 'coverage',
-  bail: true,
-  verbose: true,
-  esModules: true,
+  testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.jsx?$',
+  moduleFileExtensions: ['js', 'jsx', 'json', 'node'],
 };
