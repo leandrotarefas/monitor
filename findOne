@@ -1,0 +1,27 @@
+function findUserByName(name) {
+    return new Promise(async (resolve, reject) => {
+        let attempts = 0;
+
+        const retryFind = async () => {
+            try {
+                attempts++;
+                console.log(`Tentativa ${attempts}`);
+
+                const user = await User.findOne({ name: name });
+                if (user) {
+                    resolve(user);
+                } else {
+                    if (attempts >= 10) {
+                        reject(new Error('Número máximo de tentativas alcançado'));
+                    } else {
+                        setTimeout(retryFind, 1000);
+                    }
+                }
+            } catch (error) {
+                reject(error);
+            }
+        };
+
+        retryFind();
+    });
+}
