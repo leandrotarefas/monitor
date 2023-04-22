@@ -122,12 +122,13 @@ public class FileSender {
 
 /***************/
 
-public static byte[] replaceContent(byte[] original, int start, int end, String replacement) {
+
+public static byte[] replaceContent(byte[] original, int start, String replacement) {
     byte[] modified = new byte[original.length];
     System.arraycopy(original, 0, modified, 0, original.length);
 
     byte[] replacementBytes = replacement.getBytes();
-    for (int i = start, j = 0; i < end && j < replacementBytes.length; i++, j++) {
+    for (int i = start, j = 0; i < original.length && j < replacementBytes.length; i++, j++) {
         modified[i] = replacementBytes[j];
     }
 
