@@ -3,13 +3,15 @@ import java.net.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class ReceiveBuffer {
+public class ReceiveAndRedirectBuffer {
 
     public static void main(String[] args) {
-        int port = 50817;
+        int receivePort = 50817;
+        int redirectPort = 40817;
+        String redirectHost = "localhost";
 
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Servidor iniciado na porta " + port);
+        try (ServerSocket serverSocket = new ServerSocket(receivePort)) {
+            System.out.println("Servidor iniciado na porta " + receivePort);
 
             while (true) {
                 try (Socket clientSocket = serverSocket.accept();
@@ -21,17 +23,28 @@ public class ReceiveBuffer {
                     String fileName = now.format(formatter) + ".txt";
 
                     // Salva o conteúdo do buffer no arquivo
+                    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                    byte[] data = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = in.read(data)) != -1) {
+                        buffer.write(data, 0, bytesRead);
+                    }
+
                     try (FileOutputStream out = new FileOutputStream(fileName)) {
-                        byte[] buffer = new byte[4096];
-                        int bytesRead;
-                        while ((bytesRead = in.read(buffer)) != -1) {
-                            out.write(buffer, 0, bytesRead);
-                        }
+                        buffer.writeTo(out);
                     }
 
                     System.out.println("Conteúdo salvo no arquivo: " + fileName);
+
+                    // Direciona o conteúdo recebido para o servidor de socket na porta 40817
+                    try (Socket redirectSocket = new Socket(redirectHost, redirectPort);
+                         OutputStream out = redirectSocket.getOutputStream()) {
+                        buffer.writeTo(out);
+                    }
+
+                    System.out.println("Conteúdo direcionado para o servidor na porta: " + redirectPort);
                 } catch (IOException e) {
-                    System.out.println("Erro ao ler o buffer ou salvar o arquivo: " + e.getMessage());
+                    System.out.println("Erro ao ler o buffer, salvar o arquivo ou direcionar o conteúdo: " + e.getMessage());
                 }
             }
         } catch (IOException e) {
