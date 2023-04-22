@@ -66,3 +66,57 @@ public class DualSocket {
         outputStream.flush();
     }
 }
+
+
+
+/***************/
+
+import java.io.*;
+import java.net.*;
+import java.nio.file.*;
+import java.util.Scanner;
+
+public class FileSender {
+    private static final int SERVER_PORT = 50818;
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.print("Digite o nome do arquivo: ");
+            String fileName = scanner.nextLine();
+            sendFileToServer(fileName);
+        }
+    }
+
+    public static void sendFileToServer(String fileName) {
+        try {
+            byte[] fileContent = readFileToBuffer(fileName);
+            Socket socket = new Socket("localhost", SERVER_PORT);
+            OutputStream outputStream = socket.getOutputStream();
+            outputStream.write(fileContent);
+            outputStream.flush();
+            outputStream.close();
+            socket.close();
+            System.out.println("Arquivo enviado: " + fileName);
+        } catch (IOException e) {
+            System.err.println("Erro ao enviar o arquivo: " + e.getMessage());
+        }
+    }
+
+    public static byte[] readFileToBuffer(String fileName) throws IOException {
+        File file = new File(fileName);
+        int fileSize = (int) file.length();
+        byte[] buffer = new byte[fileSize];
+
+        try (FileInputStream fis = new FileInputStream(file)) {
+            int bytesRead = fis.read(buffer);
+            if (bytesRead != fileSize) {
+                throw new IOException("Não foi possível ler todo o conteúdo do arquivo");
+            }
+        }
+
+        return buffer;
+    }
+}
+
