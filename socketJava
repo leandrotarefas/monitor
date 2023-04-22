@@ -1,0 +1,41 @@
+import java.io.*;
+import java.net.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class ReceiveBuffer {
+
+    public static void main(String[] args) {
+        int port = 50817;
+
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Servidor iniciado na porta " + port);
+
+            while (true) {
+                try (Socket clientSocket = serverSocket.accept();
+                     InputStream in = clientSocket.getInputStream()) {
+
+                    // Gera o nome do arquivo no formato YYYYMMSSHHmmssSSS.txt
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+                    String fileName = now.format(formatter) + ".txt";
+
+                    // Salva o conteúdo do buffer no arquivo
+                    try (FileOutputStream out = new FileOutputStream(fileName)) {
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, bytesRead);
+                        }
+                    }
+
+                    System.out.println("Conteúdo salvo no arquivo: " + fileName);
+                } catch (IOException e) {
+                    System.out.println("Erro ao ler o buffer ou salvar o arquivo: " + e.getMessage());
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao iniciar o servidor: " + e.getMessage());
+        }
+    }
+}
