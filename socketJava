@@ -39,7 +39,9 @@ public class DualSocket {
 
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 String fileName = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date()) + ".txt";
-                Files.write(Paths.get(fileName), buffer, 0, bytesRead, StandardOpenOption.CREATE);
+                try (FileOutputStream fos = new FileOutputStream(fileName)) {
+                    fos.write(buffer, 0, bytesRead);
+                }
                 System.out.println("Arquivo " + fileName + " criado com " + bytesRead + " bytes");
                 sendDataToClient(buffer, bytesRead);
             }
