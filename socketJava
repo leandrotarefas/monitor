@@ -172,3 +172,30 @@ public void startServer() {
 public static String padRight(String str, int tamanho, char caracter) {
     return String.format("%-" + tamanho + "s", str).replace(' ', caracter);
 }
+
+
+
+/*****************/
+
+public class LerArquivo {
+
+    public static void lerArquivo(String caminhoArquivo) {
+        try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] campos = linha.split(";");
+                if (campos.length > 2) {
+                    System.out.println("Campos válidos: ");
+                    for (String campo : campos) {
+                        System.out.println(campo.trim());
+                    }
+                    System.out.println("---------------");
+                } else {
+                    System.out.println("Linha descartada: " + linha.trim());
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Não foi possível ler o arquivo: " + e.getMessage());
+        }
+    }
+}
