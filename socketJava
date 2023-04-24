@@ -161,3 +161,14 @@ public void startServer() {
             }
         }).start();
     }
+    
+    
+    /******/
+    
+    public static String padLeft(String str, int tamanho, char caracter) {
+    return String.format("%" + tamanho + "s", str).replace(' ', caracter);
+}
+
+public static String padRight(String str, int tamanho, char caracter) {
+    return String.format("%-" + tamanho + "s", str).replace(' ', caracter);
+}
