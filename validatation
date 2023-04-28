@@ -1,0 +1,38 @@
+function validateRequest(schema) {
+    return (req, res, next) => {
+        const { error } = schema.validate(req.body);
+        if (error) {
+            res.status(400).send(error.details[0].message);
+        } else {
+            next();
+        }
+    };
+}
+
+
+const schema = Joi.object({
+    country: Joi.string()
+        .valid('BR')
+        .required(),
+    ec: Joi.string()
+        .pattern(new RegExp('^[0-9]{1,15}$'))
+        .required(),
+    operation: Joi.string()
+        .valid('CREDIT')
+        .required(),
+    installment: Joi.boolean()
+        .required(),
+    amount: Joi.string()
+        .pattern(new RegExp('^[0-9]{1,10}$'))
+        .required(),
+    card: Joi.object({
+        bin: Joi.string().required(),
+        pan: Joi.string().required(),
+        brand: Joi.string()
+            .valid('MASTERCARD', 'VISA')
+            .required()
+    }).required()
+});
+app.post('/endpoint', validateRequest(schema), (req, res) => {
+    // ... lógica do controlador aqui ...
+});
