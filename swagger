@@ -1,0 +1,176 @@
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: "Transação API"
+paths:
+  /v1/api/transaction/rt:
+    post:
+      summary: "Enviar transação"
+      description: "Endpoint para enviar transações de pagamento"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentTransaction"
+      responses:
+        '200':
+          description: "Transação analisada com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+        '400':
+          description: "Pedido inválido"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestResponse"
+        '503':
+          description: "Indisponibilidade no serviço de anti fraude"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    PaymentTransaction:
+      type: "object"
+      properties:
+        paymentId:
+          type: "string"
+          format: "uuid"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        country:
+          type: "string"
+          enum: ["BR"]
+          example: "BR"
+        ec:
+          type: "integer"
+          format: "int32"
+          minimum: 1
+          example: 1
+        operation:
+          type: "string"
+          enum: ["DEBIT", "CREDIT"]
+          example: "DEBIT"
+        amount:
+          type: "integer"
+          format: "int64"
+          minimum: 1
+          example: 1
+        card:
+          $ref: "#/components/schemas/Card"
+      required:
+        - paymentId
+        - country
+        - ec
+        - operation
+        - amount
+        - card
+
+    Card:
+      type: "object"
+      properties:
+        bin:
+          type: "string"
+          example: "123456"
+        card:
+          type: "string"
+          example: "1234 5678 9012 3456"
+        brand:
+          type: "string"
+          enum: ["MASTERCARD","VISA","ELO","AMEX","HIPERCARD"]
+          example: "MASTERCARD"
+      required:
+        - bin
+        - card
+        - brand
+
+    TransactionResponse:
+      type: "object"
+      properties:
+        requestId:
+          type: "string"
+          description: "Tag de controle gerada pelo antifraude"
+          example: "req-12345"
+        paymentId:
+          type: "string"
+          format: "uuid"
+          description: "Id informado no momento da requisição"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: "string"
+          enum: ["ACCEPT", "DENY"]
+          description: "Resposta do serviço de anti fraude"
+          example: "ACCEPT"
+        code:
+          type: "integer"
+          description: "Código para controle de rastreabilidade"
+          example: 200
+        dateTime:
+          type: "string"
+          format: "date-time"
+          description: "Data de análise"
+          example: "2023-05-31T18:30:00.000Z"
+        elapsedTime:
+          type: "number"
+          format: "double"
+          description: "Tempo de processamento da análise em ms"
+          example: 123.45
+      required:
+        - requestId
+        - paymentId
+        - status
+        - code
+        - dateTime
+        - elapsedTime        
+
+    ErrorResponse:
+      type: "object"
+      properties:
+        requestId:
+          type: "string"
+          description: "Tag de controle gerada pelo antifraude"
+          example: "req-12345"
+        paymentId:
+          type: "string"
+          format: "uuid"
+          description: "Id informado no momento da requisição"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: "string"
+          enum: ["FAILED"]
+          description: "Indisponibilidade no serviço de anti fraude"
+          example: "FAILED"
+        code:
+          type: "integer"
+          format: "int32"
+          description: "Código para controle de rastreabilidade"
+          example: 1
+        dateTime:
+          type: "string"
+          format: "date-time"
+          description: "Data de análise"
+          example: "2023-05-31T18:30:00.000Z"
+        elapsedTime:
+          type: "number"
+          format: "double"
+          description: "Tempo de processamento da análise em ms"
+          example: 123.45
+      required:
+        - requestId
+        - paymentId
+        - status
+        - code
+        - dateTime
+        - elapsedTime
+        
+    BadRequestResponse:
+      type: "object"
+      properties:
+        error:
+          type: "string"
+          description: "Descrição de campo ou valor invalido enviado no payload"
+          example: "country is required"
