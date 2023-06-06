@@ -1,0 +1,20 @@
+const net = require('net');
+
+const hostname = process.argv[2];
+const port = process.argv[3];
+
+const socket = net.createConnection({ host: hostname, port: port }, () => {
+  console.log('Connected to server');
+});
+
+socket.on('data', (data) => {
+  console.log('Received data:', data.toString());
+});
+
+socket.on('close', () => {
+  console.log('Connection closed');
+});
+
+socket.on('error', (err) => {
+  console.error('Socket error:', err);
+});
