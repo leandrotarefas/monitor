@@ -1,0 +1,42 @@
+const net = require('net');
+const fs = require('fs');
+const moment = require('moment');
+
+const hostname = process.argv[2];
+const port = process.argv[3];
+
+const logFileName = `log${moment().format('YYYYMMDD')}.log`;
+
+const server = net.createServer((socket) => {
+  console.log('Client connected');
+
+  socket.on('data', (data) => {
+    const content = data.toString();
+    console.log(content);
+    saveToLogFile(content);
+  });
+
+  socket.on('end', () => {
+    console.log('Client disconnected');
+  });
+});
+
+server.listen(port, hostname, () => {
+  console.log(`Server running at ${hostname}:${port}`);
+});
+
+function saveToLogFile(content) {
+  const logContent = `[${moment().format('YYYY-MM-DD HH:mm:ss')}] ${content}\n`;
+  fs.appendFile(logFileName, logContent, (err) => {
+    if (err) {
+      console.error('Error writing to log file:', err);
+    }
+  });
+}
+
+process.on('SIGINT', () => {
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
