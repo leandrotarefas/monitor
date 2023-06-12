@@ -1,0 +1,54 @@
+import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+@Service
+public class SocketService {
+    @PostConstruct
+    public void init() {
+        new Thread(() -> {
+            try (ServerSocket server = new ServerSocket(8888)) {
+                System.out.println("Server Started ....");
+
+                while (true) {
+                    Socket serverClient = server.accept();  //server accept the client connection request
+                    System.out.println("New client connected: " + serverClient.getInetAddress());
+                    new ServerClientThread(serverClient).start(); //send  the request to a separate thread
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private class ServerClientThread extends Thread {
+        Socket serverClient;
+
+        ServerClientThread(Socket inSocket) {
+            serverClient = inSocket;
+        }
+
+        public void run() {
+            try {
+                DataInputStream inStream = new DataInputStream(serverClient.getInputStream());
+
+                String clientMessage = "";
+                while (!clientMessage.equals("bye")) {
+                    clientMessage = inStream.readUTF();
+                    System.out.println("Message from client: " + clientMessage);
+                }
+
+                inStream.close();
+                serverClient.close();
+                System.out.println("Client disconnected: " + serverClient.getInetAddress());
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+}
