@@ -1,0 +1,32 @@
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost:27017/meuBancoDeDados', { useNewUrlParser: true, useUnifiedTopology: true });
+
+const db = mongoose.connection;
+
+db.on('error', console.error.bind(console, 'Erro de conexão:'));
+db.once('open', function() {
+  console.log("Conectado ao banco de dados!");
+  
+  const colecaoOrigem = db.collection('colecaoOrigem');
+  const colecaoDestino = db.collection('colecaoDestino');
+
+  const changeStream = colecaoOrigem.watch();
+
+  changeStream.on('change', (change) => {
+    console.log('Uma alteração foi detectada:');
+    console.log(change);
+    
+    if (change.operationType === 'insert') {
+      const document = change.fullDocument;
+      console.log('Novo documento inserido:');
+      console.log(document);
+
+      // Salva o documento alterado na colecaoDestino.
+      colecaoDestino.insertOne(document, function(err, res) {
+        if (err) throw err;
+        console.log("Documento inserido na colecaoDestino");
+      });
+    }
+  });
+});
