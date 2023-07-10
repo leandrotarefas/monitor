@@ -1,12 +1,14 @@
-import java.io.*;
-import java.net.*;
-
 public class SocketServer {
     public static void main(String[] args) {
         int port = 50817;
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Servidor escutando na porta " + port);
+
+            // Criação do Socket para redirecionar os dados
+            String destinationHost = "localhost";
+            int destinationPort = 40817;
+            Socket destinationSocket = new Socket(destinationHost, destinationPort);
 
             while (true) {
                 Socket socket = serverSocket.accept();
@@ -16,24 +18,16 @@ public class SocketServer {
                     try {
                         // Obter o fluxo de entrada do cliente
                         InputStream inputStream = socket.getInputStream();
+                        OutputStream outputStream = destinationSocket.getOutputStream();
 
-                        // Criar um arquivo com timestamp
-                        String filename = getTimestampFilename();
-                        FileOutputStream fileOutputStream = new FileOutputStream(filename);
-
-                        // Ler e salvar o buffer recebido no arquivo
+                        // Redirecionar o buffer para outro servidor de socket em localhost
                         byte[] buffer = new byte[1024];
                         int bytesRead;
 
                         while ((bytesRead = inputStream.read(buffer)) != -1) {
-                            fileOutputStream.write(buffer, 0, bytesRead);
+                            outputStream.write(buffer, 0, bytesRead);
+                            outputStream.flush();
                         }
-
-                        fileOutputStream.close();
-                        System.out.println("Arquivo salvo: " + filename);
-
-                        // Redirecionar o buffer para outro servidor de socket em localhost
-                        redirectToSocket(filename, "localhost", 40817);
 
                         socket.close();
                     } catch (IOException e) {
@@ -46,29 +40,6 @@ public class SocketServer {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private static String getTimestampFilename() {
-        long currentTime = System.currentTimeMillis();
-        String filename = String.format("%tF.%tT.%tL.txt", currentTime, currentTime, currentTime);
-        return filename;
-    }
-
-    private static void redirectToSocket(String filename, String host, int port) throws IOException {
-        try (Socket socket = new Socket(host, port)) {
-            FileInputStream fileInputStream = new FileInputStream(filename);
-            OutputStream outputStream = socket.getOutputStream();
-
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-
-            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-
-            fileInputStream.close();
-            outputStream.close();
         }
     }
 }
