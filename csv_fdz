@@ -1,0 +1,45 @@
+const { MongoClient } = require('mongodb');
+const fs = require('fs');
+const fastcsv = require('fast-csv');
+
+// Defina suas configurações de conexão ao MongoDB
+const uri = "mongodb+srv://<user>:<password>@cluster.mongodb.net/test";
+const dbName = "<NomeDoBancoDeDados>";
+
+async function fetchFromDB(collectionName, mappings) {
+  const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+  let results = [];
+
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+
+    const cursor = collection.find({});
+    await cursor.forEach(doc => {
+      let row = {};
+      for (let [col, path] of Object.entries(mappings)) {
+        const value = path.split('.').reduce((obj, p) => (obj && obj[p]) ? obj[p] : null, doc);
+        row[col] = value;
+      }
+      results.push(row);
+    });
+
+  } finally {
+    await client.close();
+  }
+
+  return results;
+}
+
+const mappings = {
+  "nome": "data.nome",
+  "phone": "data.customer.phone"
+};
+
+fetchFromDB('<NomeDaColecao>', mappings).then(results => {
+  const ws = fs.createWriteStream('output.csv');
+  fastcsv.write(results, { headers: true }).pipe(ws);
+}).catch(err => {
+  console.error('Erro ao buscar dados:', err);
+});
