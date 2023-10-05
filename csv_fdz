@@ -1,33 +1,29 @@
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 const fs = require('fs');
 const fastcsv = require('fast-csv');
 
 // Defina suas configurações de conexão ao MongoDB
-const uri = "mongodb+srv://<user>:<password>@cluster.mongodb.net/test";
-const dbName = "<NomeDoBancoDeDados>";
+const uri = "mongodb+srv://<user>:<password>@cluster.mongodb.net/<NomeDoBancoDeDados>";
 
-async function fetchFromDB(collectionName, mappings) {
-  const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const schema = new mongoose.Schema({}, { strict: false }); // Schema não estrito para ler qualquer coleção
+const Model = mongoose.model('<NomeDaColecao>', schema);
+
+async function fetchFromDB(mappings) {
+  await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
   let results = [];
+  const docs = await Model.find({});
 
-  try {
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
-
-    const cursor = collection.find({});
-    await cursor.forEach(doc => {
-      let row = {};
-      for (let [col, path] of Object.entries(mappings)) {
-        const value = path.split('.').reduce((obj, p) => (obj && obj[p]) ? obj[p] : null, doc);
-        row[col] = value;
-      }
-      results.push(row);
-    });
-
-  } finally {
-    await client.close();
+  for (let doc of docs) {
+    let row = {};
+    for (let [col, path] of Object.entries(mappings)) {
+      const value = path.split('.').reduce((obj, p) => (obj && obj[p]) ? obj[p] : null, doc._doc);
+      row[col] = value;
+    }
+    results.push(row);
   }
+
+  await mongoose.disconnect();
 
   return results;
 }
@@ -37,7 +33,7 @@ const mappings = {
   "phone": "data.customer.phone"
 };
 
-fetchFromDB('<NomeDaColecao>', mappings).then(results => {
+fetchFromDB(mappings).then(results => {
   const ws = fs.createWriteStream('output.csv');
   fastcsv.write(results, { headers: true }).pipe(ws);
 }).catch(err => {
