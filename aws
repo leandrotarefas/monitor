@@ -1,0 +1,34 @@
+const AWS = require('aws-sdk');
+const fs = require('fs');
+
+// Configurando as credenciais da AWS (substitua 'YOUR_ACCESS_KEY' e 'YOUR_SECRET_KEY' pelas suas credenciais)
+AWS.config.update({
+    accessKeyId: 'YOUR_ACCESS_KEY',
+    secretAccessKey: 'YOUR_SECRET_KEY',
+    region: 'us-west-1' // Por exemplo, mude para a sua região do S3
+});
+
+const s3 = new AWS.S3();
+
+const uploadFile = (filePath, bucketName, s3Key) => {
+    // Ler o conteúdo do arquivo
+    const fileContent = fs.readFileSync(filePath);
+
+    // Configurar os parâmetros para o upload
+    const params = {
+        Bucket: bucketName,
+        Key: s3Key,
+        Body: fileContent
+    };
+
+    // Fazer upload do arquivo para o S3
+    s3.upload(params, (err, data) => {
+        if (err) {
+            throw err;
+        }
+        console.log(`Arquivo enviado com sucesso para ${data.Location}`);
+    });
+};
+
+// Exemplo de uso:
+uploadFile('./path/to/your/local/file.txt', 'your-s3-bucket-name', 'folder/destination-name.txt');
